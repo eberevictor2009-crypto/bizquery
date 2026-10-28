@@ -1,12 +1,13 @@
 // app/post/[id]/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
 import { getUserId } from '../../lib/user';
 
-export default function PostDetail() {
+// Inner component that uses the hook
+function PostContent() {
   const { id } = useParams();
   const router = useRouter();
   const currentUserId = getUserId();
@@ -60,12 +61,10 @@ export default function PostDetail() {
       
       const viewerId = user ? user.id : currentUserId;
 
-      // Get today's date at midnight (UTC)
       const todayStart = new Date();
       todayStart.setUTCHours(0, 0, 0, 0);
 
       try {
-        // Check if they viewed THIS post TODAY
         const { data } = await supabase
           .from('post_views')
           .select('id')
@@ -74,7 +73,6 @@ export default function PostDetail() {
           .gte('viewed_at', todayStart.toISOString())
           .limit(1);
 
-        // If no view today, log it
         if (!data || data.length === 0) {
           await supabase.from('post_views').insert([
             { post_id: id, viewer_id: viewerId }
@@ -236,5 +234,14 @@ export default function PostDetail() {
         </div>
       </div>
     </main>
+  );
+}
+
+// The default export wraps the inner component in Suspense
+export default function PostDetail() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">Loading post...</div>}>
+      <PostContent />
+    </Suspense>
   );
 }
