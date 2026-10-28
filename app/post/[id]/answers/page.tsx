@@ -2,8 +2,6 @@
 import { Suspense } from 'react';
 import AllAnswersContent from './AllAnswersContent';
 
-export const instant = false;
-
 export default function AllAnswers() {
   return (
     <Suspense fallback={<div className="p-10 text-center">Loading answers...</div>}>
