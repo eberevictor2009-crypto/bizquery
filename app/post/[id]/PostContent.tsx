@@ -53,12 +53,16 @@ export default function PostContent() {
     }
   }, [post]);
 
+  // ✅ Track UNIQUE DAILY post views
   useEffect(() => {
     const trackView = async () => {
       if (!id || user === undefined) return;
+      
       const viewerId = user ? user.id : currentUserId;
+
       const todayStart = new Date();
       todayStart.setUTCHours(0, 0, 0, 0);
+
       try {
         const { data } = await supabase
           .from('post_views')
@@ -67,13 +71,17 @@ export default function PostContent() {
           .eq('viewer_id', viewerId)
           .gte('viewed_at', todayStart.toISOString())
           .limit(1);
+
         if (!data || data.length === 0) {
-          await supabase.from('post_views').insert([{ post_id: id, viewer_id: viewerId }]);
+          await supabase.from('post_views').insert([
+            { post_id: id, viewer_id: viewerId }
+          ]);
         }
       } catch (error) {
         console.error('Error tracking view:', error);
       }
     };
+    
     trackView();
   }, [id, user, currentUserId]);
 
@@ -92,18 +100,22 @@ export default function PostContent() {
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAnswer.trim()) return;
+
     const hasAlreadyAnswered = answers.some((ans) => ans.user_id === user?.id);
     if (hasAlreadyAnswered) {
       alert('You have already answered this question. Please edit your existing answer instead.');
       return;
     }
+
     const answerAuthor = user ? user.email.split('@')[0] : `Guest (${currentUserId.slice(-4)})`;
+
     await supabase.from('answers').insert([{
       qa_id: id,
       content: newAnswer.trim(),
       author_name: answerAuthor,
       user_id: user ? user.id : currentUserId,
     }]);
+
     setNewAnswer('');
     fetchData();
   };
@@ -136,6 +148,7 @@ export default function PostContent() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
       <div className="max-w-3xl mx-auto">
         <button onClick={() => router.push('/')} className="mb-6 text-green-600 font-semibold hover:underline">← Back to Feed</button>
 
@@ -149,7 +162,11 @@ export default function PostContent() {
 
           {isEditingPost ? (
             <div>
-              <textarea className="w-full border p-3 rounded-lg mb-2 h-32" value={editPostContent} onChange={(e) => setEditPostContent(e.target.value)} />
+              <textarea 
+                className="w-full border p-3 rounded-lg mb-2 h-32" 
+                value={editPostContent} 
+                onChange={(e) => setEditPostContent(e.target.value)} 
+              />
               <div className="flex gap-2">
                 <button onClick={handleSavePostEdit} className="bg-green-600 text-white px-4 py-2 rounded">Save</button>
                 <button onClick={() => setIsEditingPost(false)} className="bg-gray-300 text-black px-4 py-2 rounded">Cancel</button>
@@ -158,6 +175,7 @@ export default function PostContent() {
           ) : (
             <div>
               <p className="text-gray-700 text-lg whitespace-pre-wrap">{post.content}</p>
+              
               {user && post.user_id === user.id && (
                 <button onClick={() => setIsEditingPost(true)} className="mt-4 text-sm text-green-600 hover:underline">✏️ Edit Question</button>
               )}
@@ -177,7 +195,11 @@ export default function PostContent() {
 
                 {editingAnswerId === answer.id ? (
                   <div>
-                    <textarea className="w-full border p-3 rounded-lg mb-2 h-24" value={editAnswerContent} onChange={(e) => setEditAnswerContent(e.target.value)} />
+                    <textarea 
+                      className="w-full border p-3 rounded-lg mb-2 h-24" 
+                      value={editAnswerContent} 
+                      onChange={(e) => setEditAnswerContent(e.target.value)} 
+                    />
                     <div className="flex gap-2">
                       <button onClick={() => handleSaveAnswerEdit(answer.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm">Save</button>
                       <button onClick={() => setEditingAnswerId(null)} className="bg-gray-300 text-black px-3 py-1 rounded text-sm">Cancel</button>
@@ -186,8 +208,12 @@ export default function PostContent() {
                 ) : (
                   <div>
                     <p className="text-gray-700">{answer.content}</p>
+                    
                     {user && answer.user_id === user.id && (
-                      <button onClick={() => { setEditingAnswerId(answer.id); setEditAnswerContent(answer.content); }} className="mt-2 text-xs text-green-600 hover:underline">
+                      <button 
+                        onClick={() => { setEditingAnswerId(answer.id); setEditAnswerContent(answer.content); }} 
+                        className="mt-2 text-xs text-green-600 hover:underline"
+                      >
                         ✏️ Edit Answer
                       </button>
                     )}
