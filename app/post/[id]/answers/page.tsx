@@ -4,7 +4,6 @@ import { connection } from 'next/server';
 import AllAnswersContent from './AllAnswersContent';
 
 export default async function AllAnswers() {
-  // ✅ Forces Next.js to skip prerendering this dynamic route at build time
   await connection(); 
 
   return (
