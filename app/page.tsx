@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
 interface Post {
-  id: string;
+  id: number; // ✅ Changed from string to number to match int8 in Supabase
   title: string;
   content: string;
   type: string;
@@ -186,7 +186,8 @@ export default function Home() {
                       </span>
                     </div>
 
-                    <Link href={`/post/${post.id}`}>
+                    {/* ✅ Added String() casting just to be safe with Next.js routing */}
+                    <Link href={`/post/${String(post.id)}`}>
                       <h2 className={`text-2xl font-bold mb-2 transition-colors ${
                         isArticle ? 'text-gray-800 hover:text-green-600' : 'text-white hover:text-green-400'
                       }`}>
@@ -202,7 +203,7 @@ export default function Home() {
                       isArticle ? 'border-gray-100 text-gray-500' : 'border-gray-800 text-gray-400'
                     }`}>
                       <div className="flex gap-4">
-                        <Link href={`/post/${post.id}/answers`} className={`font-semibold transition-colors ${
+                        <Link href={`/post/${String(post.id)}/answers`} className={`font-semibold transition-colors ${
                           isArticle ? 'hover:text-green-600' : 'hover:text-green-400'
                         }`}>
                           💬 {post.answerCount} {post.answerCount === 1 ? 'Answer' : 'Answers'}
