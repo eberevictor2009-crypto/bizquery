@@ -7,7 +7,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { getUserId } from '../../lib/user';
 
 export default function PostContent() {
-  const { id } = useParams();
+  const params = useParams();
+  // Safely handle the ID (in case it's an array from the router)
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id; 
+  
   const router = useRouter();
   const currentUserId = getUserId();
   
@@ -23,15 +26,22 @@ export default function PostContent() {
   const [editAnswerContent, setEditAnswerContent] = useState('');
 
   const fetchData = async () => {
+    if (!id) return; // Don't fetch if we don't have an ID yet
     setIsLoading(true);
-    const { data: postData } = await supabase.from('business_qa').select('*').eq('id', id).single();
+    
+    // Fetch Post
+    const { data: postData, error: postError } = await supabase.from('business_qa').select('*').eq('id', id).single();
     if (postData) {
       setPost(postData);
       setEditPostContent(postData.content);
     }
+    if (postError) console.error("Error fetching post:", postError);
 
-    const { data: answersData } = await supabase.from('answers').select('*').eq('qa_id', id).order('created_at', { ascending: true });
+    // Fetch Answers
+    const { data: answersData, error: answersError } = await supabase.from('answers').select('*').eq('qa_id', id).order('created_at', { ascending: true });
     if (answersData) setAnswers(answersData);
+    if (answersError) console.error("Error fetching answers:", answersError);
+
     setIsLoading(false);
   };
 
@@ -53,13 +63,11 @@ export default function PostContent() {
     }
   }, [post]);
 
-  // ✅ Track UNIQUE DAILY post views
+  // Track views
   useEffect(() => {
     const trackView = async () => {
       if (!id || user === undefined) return;
-      
       const viewerId = user ? user.id : currentUserId;
-
       const todayStart = new Date();
       todayStart.setUTCHours(0, 0, 0, 0);
 
@@ -73,15 +81,12 @@ export default function PostContent() {
           .limit(1);
 
         if (!data || data.length === 0) {
-          await supabase.from('post_views').insert([
-            { post_id: id, viewer_id: viewerId }
-          ]);
+          await supabase.from('post_views').insert([{ post_id: id, viewer_id: viewerId }]);
         }
       } catch (error) {
         console.error('Error tracking view:', error);
       }
     };
-    
     trackView();
   }, [id, user, currentUserId]);
 
@@ -99,7 +104,7 @@ export default function PostContent() {
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAnswer.trim()) return;
+    if (!newAnswer.trim() || !id) return;
 
     const hasAlreadyAnswered = answers.some((ans) => ans.user_id === user?.id);
     if (hasAlreadyAnswered) {
@@ -109,15 +114,32 @@ export default function PostContent() {
 
     const answerAuthor = user ? user.email.split('@')[0] : `Guest (${currentUserId.slice(-4)})`;
 
-    await supabase.from('answers').insert([{
+    // Log exactly what we are trying to send to Supabase
+    console.log("Attempting to insert answer with data:", {
       qa_id: id,
       content: newAnswer.trim(),
       author_name: answerAuthor,
       user_id: user ? user.id : currentUserId,
-    }]);
+    });
+
+    // Insert Answer and explicitly capture the data and error
+    const { data, error } = await supabase.from('answers').insert([{
+      qa_id: id,
+      content: newAnswer.trim(),
+      author_name: answerAuthor,
+      user_id: user ? user.id : currentUserId,
+    }]).select(); // <-- Added .select() to force Supabase to return the inserted row
+
+    if (error) {
+      console.error("SUPABASE INSERT ERROR DETAILS:", error);
+      alert(`Database Error: ${error.message} (Code: ${error.code})`);
+      return;
+    }
+
+    console.log("Successfully inserted answer:", data);
 
     setNewAnswer('');
-    fetchData();
+    fetchData(); // Re-fetch to update the UI instantly
   };
 
   if (isLoading) return <div className="p-10 text-center">Loading...</div>;
