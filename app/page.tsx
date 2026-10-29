@@ -1,10 +1,10 @@
 // app/page.tsx
 'use client';
-import { useEffect, useState, Fragment } from 'react'; // <-- Added Fragment here
+import { useEffect, useState, Fragment } from 'react';
 import { supabase } from './lib/supabaseClient';
 import { getUserId } from './lib/user';
 import CreatePost from './components/CreatePost';
-import AdBanner from './components/AdBanner'; // <-- Import for Ads
+import AdBanner from './components/AdBanner';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -120,8 +120,11 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-3xl mx-auto">
         
-        <div className="relative text-center mb-10">
-          <div className="absolute top-0 right-0 flex gap-4 items-center">
+        {/* ✅ UPDATED HEADER SECTION FOR MOBILE FIX */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4 relative">
+          
+          {/* Auth Buttons - Order 1 on mobile, Order 2 on desktop */}
+          <div className="flex gap-4 items-center order-1 md:order-2">
             {user ? (
               <>
                 <span className="text-sm font-bold text-gray-700">Hello, {user.email.split('@')[0]}</span>
@@ -140,13 +143,18 @@ export default function Home() {
               </>
             )}
           </div>
-          <h1 className="text-5xl font-extrabold text-green-600 mb-2 mt-10 md:mt-0">BizQuery</h1>
-          <p className="text-gray-500 text-lg">Ask, Get Answers and Grow Your Business</p>
+
+          {/* Logo & Tagline - Order 2 on mobile, Order 1 on desktop */}
+          <div className="text-center md:text-left order-2 md:order-1">
+            <h1 className="text-5xl font-extrabold text-green-600 mb-2">BizQuery</h1>
+            <p className="text-gray-500 text-lg">Ask, Get Answers and Grow Your Business</p>
+          </div>
+
         </div>
 
         <CreatePost onPostCreated={fetchPosts} user={user} />
 
-        {/* --- TOP BANNER AD PLACED HERE --- */}
+        {/* TOP BANNER AD PLACED HERE */}
         <AdBanner variant="horizontal" />
 
         <div className="space-y-4">
@@ -159,7 +167,7 @@ export default function Home() {
               const isArticle = post.type === 'article';
               
               return (
-                <Fragment key={post.id}> {/* <-- Changed to Fragment here */}
+                <Fragment key={post.id}>
                   <div 
                     className={`p-6 rounded-xl shadow-sm border-l-4 transition-colors ${
                       isArticle 
@@ -213,12 +221,11 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* --- IN-FEED AD PLACED HERE --- */}
-                  {/* Injects an ad after every 3rd post (index 2, 5, 8, etc.) */}
+                  {/* IN-FEED AD PLACED HERE */}
                   {(index + 1) % 3 === 0 && (
                     <AdBanner variant="in-feed" />
                   )}
-                </Fragment> /* <-- Changed to Fragment here */
+                </Fragment>
               );
             })
           )}
