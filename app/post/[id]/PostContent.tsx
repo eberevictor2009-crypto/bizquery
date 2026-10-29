@@ -114,29 +114,19 @@ export default function PostContent() {
 
     const answerAuthor = user ? user.email.split('@')[0] : `Guest (${currentUserId.slice(-4)})`;
 
-    // Log exactly what we are trying to send to Supabase
-    console.log("Attempting to insert answer with data:", {
-      qa_id: id,
-      content: newAnswer.trim(),
-      author_name: answerAuthor,
-      user_id: user ? user.id : currentUserId,
-    });
-
-    // Insert Answer and explicitly capture the data and error
+    // Insert Answer
     const { data, error } = await supabase.from('answers').insert([{
       qa_id: id,
       content: newAnswer.trim(),
       author_name: answerAuthor,
       user_id: user ? user.id : currentUserId,
-    }]).select(); // <-- Added .select() to force Supabase to return the inserted row
+    }]).select();
 
     if (error) {
       console.error("SUPABASE INSERT ERROR DETAILS:", error);
       alert(`Database Error: ${error.message} (Code: ${error.code})`);
       return;
     }
-
-    console.log("Successfully inserted answer:", data);
 
     setNewAnswer('');
     fetchData(); // Re-fetch to update the UI instantly
