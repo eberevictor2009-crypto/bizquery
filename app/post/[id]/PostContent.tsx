@@ -106,6 +106,10 @@ export default function PostContent() {
     e.preventDefault();
     if (!newAnswer.trim() || !id) return;
 
+    // 🚨 DEBUG: Check what the ID actually is
+    alert(`The app is trying to use this ID: ${id}`);
+    console.log("The ID type is:", typeof id, "Value:", id);
+
     const hasAlreadyAnswered = answers.some((ans) => ans.user_id === user?.id);
     if (hasAlreadyAnswered) {
       alert('You have already answered this question. Please edit your existing answer instead.');
@@ -114,9 +118,8 @@ export default function PostContent() {
 
     const answerAuthor = user ? user.email.split('@')[0] : `Guest (${currentUserId.slice(-4)})`;
 
-    // Insert Answer
     const { data, error } = await supabase.from('answers').insert([{
-      qa_id: id,
+      qa_id: id, // This is what is being sent to Supabase
       content: newAnswer.trim(),
       author_name: answerAuthor,
       user_id: user ? user.id : currentUserId,
